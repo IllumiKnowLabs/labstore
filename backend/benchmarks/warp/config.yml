@@ -50,7 +50,7 @@ warp:
 
   advanced:
     stress: false
-    debug: false
+    debug: true
     disable-http-keepalive: false
     http2: false
     rps-limit:
