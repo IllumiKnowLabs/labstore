@@ -2,7 +2,7 @@ BIN_DIR := bin
 BACKEND_DIR := backend
 FRONTEND_DIR := web
 BACKEND_CMD := $(BIN_DIR)/labstore-server
-FRONTEND_BUILD_DIR := $(FRONTEND_DIR)/dist
+FRONTEND_BUILD_DIR := $(FRONTEND_DIR)/build
 
 .PHONY: all backend frontend build run clean
 
@@ -19,16 +19,16 @@ $(BACKEND_CMD): $(BACKEND_SRCS) | $(BIN_DIR)
 backend: $(BACKEND_CMD)
 
 frontend:
-	# cd $(FRONTEND_DIR) && npm install
-	# cd $(FRONTEND_DIR) && npm run build
+	cd $(FRONTEND_DIR) && npm install
+	cd $(FRONTEND_DIR) && npm run build
 
 build: backend frontend
 
 run: build
 	set -a; . ./.env; set +a; \
-	(cd $(BACKEND_DIR) && ../$(BACKEND_CMD) serve --debug)# && \
-	# (cd $(FRONTEND_DIR) && npm start)
+	(cd $(BACKEND_DIR) && ../$(BACKEND_CMD) serve --debug &) && \
+	(cd $(FRONTEND_DIR) && npm run preview -- --port 5123)
 
 clean:
 	rm -rf $(BIN_DIR)
-	rm -rf $(FRONTEND_DIR)/node_modules $(FRONTEND_BUILD_DIR)
+	rm -rf $(FRONTEND_DIR)/node_modules $(FRONTEND_DIR)/.svelte-kit $(FRONTEND_BUILD_DIR)
