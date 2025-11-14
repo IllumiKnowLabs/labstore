@@ -298,11 +298,13 @@ func (res *BaseListBucketResult) list(r *BaseListObjectsRequest) error {
 		size := info.Size()
 
 		obj := core.Object{
-			Key:          key,
-			LastModified: lastModified,
-			ETag:         eTag,
-			Size:         size,
-			// TODO add Owner when there is IAM (optional for V2)
+			BaseObject: core.BaseObject{
+				Key:          key,
+				LastModified: lastModified,
+				ETag:         eTag,
+				Size:         size,
+			},
+			// TODO: ...
 		}
 
 		res.Contents = append(res.Contents, obj)

@@ -68,4 +68,5 @@ func loadRoutes(router *http.ServeMux) {
 	router.Handle("GET /{bucket}/{key...}", middleware.WithIAM(iam.GetObject, http.HandlerFunc(object.GetObjectHandler)))
 	router.Handle("PUT /{bucket}/{key...}", middleware.WithIAM(iam.PutObject, http.HandlerFunc(object.PutObjectHandler)))
 	router.Handle("DELETE /{bucket}/{key...}", middleware.WithIAM(iam.DeleteObject, http.HandlerFunc(object.DeleteObjectHandler)))
+	router.Handle("POST /{bucket}", middleware.WithIAM(iam.DeleteBucket, http.HandlerFunc(object.DeleteObjectsHandler)))
 }

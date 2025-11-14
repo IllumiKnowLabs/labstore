@@ -14,7 +14,7 @@ func DeleteObject(bucket, key string) error {
 
 	err := os.Remove(objPath)
 	if err != nil {
-		return ErrorNoSuchKey()
+		return ErrorNoSuchKey(key)
 	}
 
 	return nil

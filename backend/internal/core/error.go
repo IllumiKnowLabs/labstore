@@ -50,15 +50,21 @@ func ErrorSignatureDoesNotMatch() *S3Error {
 
 type S3Error struct {
 	XMLName    xml.Name `xml:"Error"`
+	Key        string
 	Code       string
 	Message    string
-	RequestId  string
-	HostId     string
-	StatusCode int `xml:"-"`
+	VersionId  string
+	RequestId  string `xml:"-"`
+	HostId     string `xml:"-"`
+	StatusCode int    `xml:"-"`
 }
 
 func (e *S3Error) Error() string {
-	return fmt.Sprintf("%s: %s", e.Code, e.Message)
+	if e.Key == "" {
+		return fmt.Sprintf("%s: %s", e.Code, e.Message)
+	}
+
+	return fmt.Sprintf("%s: %s: %s", e.Code, e.Message, e.Key)
 }
 
 func (e *S3Error) WithRequestID(requestID string) *S3Error {
