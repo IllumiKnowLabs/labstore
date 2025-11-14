@@ -10,6 +10,6 @@ func WriteXML(w http.ResponseWriter, status int, v any) {
 	w.WriteHeader(status)
 
 	if err := xml.NewEncoder(w).Encode(v); err != nil {
-		http.Error(w, "failed to encode XML", http.StatusInternalServerError)
+		http.Error(w, "Failed to encode XML", http.StatusInternalServerError)
 	}
 }

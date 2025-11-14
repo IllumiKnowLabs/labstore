@@ -22,7 +22,7 @@ func GetObject(bucket, key string) (*GetObjectResult, error) {
 
 	file, err := os.Open(objPath)
 	if err != nil {
-		return nil, ErrorNoSuchKey()
+		return nil, ErrorNoSuchKey(key)
 	}
 
 	info, err := file.Stat()

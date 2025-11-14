@@ -21,7 +21,7 @@ func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	path := core.BucketKeyPath(bucket, key)
 	if helper.IsDir(path) {
-		core.HandleError(w, ErrorNoSuchKey())
+		core.HandleError(w, ErrorNoSuchKey(key))
 		return
 	}
 
