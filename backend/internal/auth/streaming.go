@@ -20,15 +20,15 @@ const StreamingPayload = "STREAMING-AWS4-HMAC-SHA256-PAYLOAD"
 type SigV4ChunkedReader struct {
 	Body       io.ReadCloser
 	PrevSig    string
-	Credential *SigV4Credential
+	Credential *sigV4Credential
 	Timestamp  string
 
 	reader *bufio.Reader
-	header *SigV4ChunkHeader
+	header *sigV4ChunkHeader
 	data   []byte
 }
 
-type SigV4ChunkHeader struct {
+type sigV4ChunkHeader struct {
 	size      int
 	signature string
 }
@@ -97,7 +97,7 @@ func (r *SigV4ChunkedReader) readChunkHeader() error {
 		return errors.New("could not find 'chunk-signature=' prefix")
 	}
 
-	r.header = &SigV4ChunkHeader{
+	r.header = &sigV4ChunkHeader{
 		size:      int(size),
 		signature: sig,
 	}
@@ -171,7 +171,7 @@ func (r *SigV4ChunkedReader) buildChunkStringToSign() string {
 	stringToSign.WriteString(r.Timestamp)
 	stringToSign.WriteString("\n")
 
-	stringToSign.WriteString(r.Credential.Scope)
+	stringToSign.WriteString(r.Credential.scope)
 	stringToSign.WriteString("\n")
 
 	stringToSign.WriteString(r.PrevSig)
