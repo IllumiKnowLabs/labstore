@@ -18,8 +18,6 @@ import (
 	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
 )
 
-const UnsignedPayload = "UNSIGNED-PAYLOAD"
-
 type sigV4Request struct {
 	method               string
 	canonicalURI         string
@@ -255,7 +253,7 @@ func buildCanonicalHeaders(r *http.Request, auth *sigV4Authorization) map[string
 }
 
 func (req *sigV4Request) validatePayloadHash(r *http.Request) error {
-	if req.payloadHash == UnsignedPayload || req.payloadHash == StreamingPayload {
+	if req.payloadHash == unsignedPayload || req.payloadHash == streamingPayload {
 		return nil
 	}
 
@@ -319,7 +317,7 @@ func (req *sigV4Request) validateSignature() (*sigV4Result, error) {
 	)
 
 	if hmac.Equal(byteSignature, byteRecomputedSignature) {
-		isStreaming := req.payloadHash == StreamingPayload
+		isStreaming := req.payloadHash == streamingPayload
 
 		res := &sigV4Result{
 			Credential:  req.authorization.credential,
