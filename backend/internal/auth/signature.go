@@ -295,13 +295,7 @@ func buildCanonicalHeaders(r *http.Request, auth *Sigv4Authorization) map[string
 
 // Recompute and validate SigV4 signature
 func (req *SigV4Request) validateSignature() (*SigV4Result, error) {
-	canonicalRequest, err := req.buildCanonicalRequest()
-	if err != nil {
-		return nil, errors.New("could not build canonical request")
-	}
-	slog.Debug("Built canonical request", "canonicalRequest", security.TruncLastLine(canonicalRequest))
-
-	stringToSign := req.buildStringToSign(canonicalRequest)
+	stringToSign := req.buildStringToSign()
 	slog.Debug("Built string to sign", "stringToSign", security.TruncLastLine(stringToSign))
 
 	signature, err := computeSignature(req.Authorization.Credential, stringToSign)
@@ -342,7 +336,7 @@ func (req *SigV4Request) validateSignature() (*SigV4Result, error) {
 	return nil, errors.New("signatures do not match")
 }
 
-func (req *SigV4Request) buildCanonicalRequest() (string, error) {
+func (req *SigV4Request) buildCanonicalRequest() string {
 	var canonicalRequest strings.Builder
 
 	canonicalRequest.WriteString(req.Method)
@@ -368,10 +362,13 @@ func (req *SigV4Request) buildCanonicalRequest() (string, error) {
 
 	canonicalRequest.WriteString(req.PayloadHash)
 
-	return canonicalRequest.String(), nil
+	return canonicalRequest.String()
 }
 
-func (req *SigV4Request) buildStringToSign(canonicalRequest string) string {
+func (req *SigV4Request) buildStringToSign() string {
+	canonicalRequest := req.buildCanonicalRequest()
+	slog.Debug("Built canonical request", "canonicalRequest", security.TruncLastLine(canonicalRequest))
+
 	var stringToSign strings.Builder
 
 	stringToSign.WriteString("AWS4-HMAC-SHA256")
