@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+const (
+	unsignedPayload  = "UNSIGNED-PAYLOAD"
+	streamingPayload = "STREAMING-AWS4-HMAC-SHA256-PAYLOAD"
+)
+
 func computeSignature(cred *sigV4Credential, stringToSign string) (string, error) {
 	scopeParts := strings.Split(cred.scope, "/")
 

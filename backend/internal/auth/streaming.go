@@ -15,8 +15,6 @@ import (
 	"github.com/DataLabTechTV/labstore/backend/internal/security"
 )
 
-const StreamingPayload = "STREAMING-AWS4-HMAC-SHA256-PAYLOAD"
-
 type SigV4ChunkedReader struct {
 	Body       io.ReadCloser
 	PrevSig    string
