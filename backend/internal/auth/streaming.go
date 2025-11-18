@@ -9,17 +9,18 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/security"
 )
 
-type SigV4ChunkedReader struct {
-	Body       io.ReadCloser
-	PrevSig    string
-	Credential *sigV4Credential
-	Timestamp  string
+type sigV4ChunkedReader struct {
+	body       io.ReadCloser
+	prevSig    string
+	credential *sigV4Credential
+	timestamp  string
 
 	reader *bufio.Reader
 	header *sigV4ChunkHeader
@@ -31,9 +32,18 @@ type sigV4ChunkHeader struct {
 	signature string
 }
 
-func (r *SigV4ChunkedReader) Read(buf []byte) (int, error) {
+func NewSigV4ChunkedReader(r *http.Request, res *sigV4Result) *sigV4ChunkedReader {
+	return &sigV4ChunkedReader{
+		body:       r.Body,
+		prevSig:    res.Signature,
+		credential: res.Credential,
+		timestamp:  res.Timestamp,
+	}
+}
+
+func (r *sigV4ChunkedReader) Read(buf []byte) (int, error) {
 	if r.reader == nil {
-		r.reader = bufio.NewReader(r.Body)
+		r.reader = bufio.NewReader(r.body)
 	}
 
 	if len(r.data) > 0 {
@@ -62,7 +72,7 @@ func (r *SigV4ChunkedReader) Read(buf []byte) (int, error) {
 		return 0, err
 	}
 
-	r.PrevSig = r.header.signature
+	r.prevSig = r.header.signature
 
 	n := copy(buf, r.data)
 	r.data = r.data[n:]
@@ -70,11 +80,11 @@ func (r *SigV4ChunkedReader) Read(buf []byte) (int, error) {
 	return n, nil
 }
 
-func (r *SigV4ChunkedReader) Close() error {
-	return r.Body.Close()
+func (r *sigV4ChunkedReader) Close() error {
+	return r.body.Close()
 }
 
-func (r *SigV4ChunkedReader) readChunkHeader() error {
+func (r *sigV4ChunkedReader) readChunkHeader() error {
 	line, err := r.reader.ReadString('\n')
 	if err != nil && err != io.EOF {
 		return err
@@ -105,7 +115,7 @@ func (r *SigV4ChunkedReader) readChunkHeader() error {
 	return nil
 }
 
-func (r *SigV4ChunkedReader) readChunkData() error {
+func (r *sigV4ChunkedReader) readChunkData() error {
 	r.data = make([]byte, r.header.size)
 
 	if _, err := io.ReadFull(r.reader, r.data); err != nil {
@@ -117,7 +127,7 @@ func (r *SigV4ChunkedReader) readChunkData() error {
 	return nil
 }
 
-func (r *SigV4ChunkedReader) readTrailingCRLF() error {
+func (r *sigV4ChunkedReader) readTrailingCRLF() error {
 	crlf := make([]byte, 2)
 
 	if _, err := io.ReadFull(r.reader, crlf); err != nil || !bytes.Equal(crlf, []byte{'\r', '\n'}) {
@@ -129,9 +139,9 @@ func (r *SigV4ChunkedReader) readTrailingCRLF() error {
 	return nil
 }
 
-func (r *SigV4ChunkedReader) verifyChunkSigV4() error {
+func (r *sigV4ChunkedReader) verifyChunkSigV4() error {
 	stringToSign := r.buildChunkStringToSign()
-	recomputedSignature, err := computeSignature(r.Credential, stringToSign)
+	recomputedSignature, err := computeSignature(r.credential, stringToSign)
 
 	if err != nil {
 		return err
@@ -160,19 +170,19 @@ func (r *SigV4ChunkedReader) verifyChunkSigV4() error {
 	return errors.New("chunk signatures differ")
 }
 
-func (r *SigV4ChunkedReader) buildChunkStringToSign() string {
+func (r *sigV4ChunkedReader) buildChunkStringToSign() string {
 	var stringToSign strings.Builder
 
 	stringToSign.WriteString("AWS4-HMAC-SHA256-PAYLOAD")
 	stringToSign.WriteString("\n")
 
-	stringToSign.WriteString(r.Timestamp)
+	stringToSign.WriteString(r.timestamp)
 	stringToSign.WriteString("\n")
 
-	stringToSign.WriteString(r.Credential.scope)
+	stringToSign.WriteString(r.credential.scope)
 	stringToSign.WriteString("\n")
 
-	stringToSign.WriteString(r.PrevSig)
+	stringToSign.WriteString(r.prevSig)
 	stringToSign.WriteString("\n")
 
 	emptyHash := sha256.Sum256([]byte(""))
