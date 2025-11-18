@@ -20,38 +20,42 @@ import (
 
 const UnsignedPayload = "UNSIGNED-PAYLOAD"
 
-type SigV4Request struct {
-	Method               string
-	CanonicalURI         string
-	CanonicalQueryString string
-	CanonicalHeaders     map[string]string
-	Authorization        *Sigv4Authorization
-	Timestamp            string
-	PayloadHash          string
+type sigV4Request struct {
+	method               string
+	canonicalURI         string
+	canonicalQueryString string
+	canonicalHeaders     map[string]string
+	authorization        *sigV4Authorization
+	timestamp            string
+	payloadHash          string
 }
 
-type Sigv4Authorization struct {
-	Credential    *SigV4Credential
-	SignedHeaders []string
-	Signature     string
+type sigV4Authorization struct {
+	credential    *sigV4Credential
+	signedHeaders []string
+	signature     string
 }
 
-type SigV4Credential struct {
+type sigV4Credential struct {
 	AccessKey string
-	SecretKey string
-	Scope     string
+	secretKey string
+	scope     string
 }
 
-type SigV4Result struct {
-	Credential  *SigV4Credential
+type sigV4Result struct {
+	Credential  *sigV4Credential
 	Signature   string
 	Timestamp   string
 	IsStreaming bool
 }
 
-func VerifySigV4(r *http.Request) (*SigV4Result, error) {
-	req, err := parseRequest(r)
+func VerifySigV4(r *http.Request) (*sigV4Result, error) {
+	req, err := newSigV4Request(r)
 	if err != nil {
+		return nil, fmt.Errorf("sigv4: %w", err)
+	}
+
+	if err := req.validatePayloadHash(r); err != nil {
 		return nil, fmt.Errorf("sigv4: %w", err)
 	}
 
@@ -63,19 +67,17 @@ func VerifySigV4(r *http.Request) (*SigV4Result, error) {
 	return res, nil
 }
 
-func parseRequest(r *http.Request) (*SigV4Request, error) {
+func newSigV4Request(r *http.Request) (*sigV4Request, error) {
 	authorization := r.Header.Get("Authorization")
 	slog.Debug("Parsing SigV4 request", "Authorization", security.TruncParamHeader(authorization, "Signature"))
 
-	auth, err := parseAuthorization(authorization)
+	auth, err := newSigV4Authorization(authorization)
 	if err != nil {
 		return nil, err
 	}
 
-	payloadHash, err := validatePayloadHash(r)
-	if err != nil {
-		return nil, err
-	}
+	payloadHash := r.Header.Get("X-Amz-Content-SHA256")
+	slog.Debug("Received payload hash", "X-Amz-Content-SHA256", security.Trunc(payloadHash))
 
 	timestamp := r.Header.Get("X-Amz-Date")
 	slog.Debug("Received timestamp", "X-Amz-Date", timestamp)
@@ -89,21 +91,21 @@ func parseRequest(r *http.Request) (*SigV4Request, error) {
 	canonicalHeaders := buildCanonicalHeaders(r, auth)
 	slog.Debug("Built canonical headers", "headers", canonicalHeaders)
 
-	res := &SigV4Request{
-		Method:               r.Method,
-		CanonicalURI:         canonicalURI,
-		CanonicalQueryString: canonicalQueryString,
-		CanonicalHeaders:     canonicalHeaders,
-		Authorization:        auth,
-		Timestamp:            timestamp,
-		PayloadHash:          payloadHash,
+	res := &sigV4Request{
+		method:               r.Method,
+		canonicalURI:         canonicalURI,
+		canonicalQueryString: canonicalQueryString,
+		canonicalHeaders:     canonicalHeaders,
+		authorization:        auth,
+		timestamp:            timestamp,
+		payloadHash:          payloadHash,
 	}
 
 	return res, nil
 }
 
 // Check for SigV4 prefix, and extract credential, signed headers and signature
-func parseAuthorization(authorization string) (*Sigv4Authorization, error) {
+func newSigV4Authorization(authorization string) (*sigV4Authorization, error) {
 	auth, ok := strings.CutPrefix(authorization, "AWS4-HMAC-SHA256 ")
 	if !ok {
 		return nil, errors.New("header Authorization must start with AWS4-HMAC-SHA256")
@@ -150,22 +152,22 @@ func parseAuthorization(authorization string) (*Sigv4Authorization, error) {
 		"Signature", security.Trunc(signature),
 	)
 
-	cred, err := parseCredential(credential)
+	cred, err := newSigV4Credential(credential)
 	if err != nil {
 		return nil, err
 	}
 
-	res := &Sigv4Authorization{
-		Credential:    cred,
-		SignedHeaders: signedHeaders,
-		Signature:     signature,
+	res := &sigV4Authorization{
+		credential:    cred,
+		signedHeaders: signedHeaders,
+		signature:     signature,
 	}
 
 	return res, nil
 }
 
 // Extract access key and scope, and retrieve secret key from IAM
-func parseCredential(credential string) (*SigV4Credential, error) {
+func newSigV4Credential(credential string) (*sigV4Credential, error) {
 	credentialParts := strings.Split(credential, "/")
 
 	accessKey := credentialParts[0]
@@ -179,54 +181,13 @@ func parseCredential(credential string) (*SigV4Credential, error) {
 	scope := strings.Join(credentialParts[1:], "/")
 	slog.Debug("Extracted scope from credential", "scope", scope)
 
-	res := &SigV4Credential{
+	res := &sigV4Credential{
 		AccessKey: accessKey,
-		SecretKey: secretKey,
-		Scope:     scope,
+		secretKey: secretKey,
+		scope:     scope,
 	}
 
 	return res, nil
-}
-
-func validatePayloadHash(r *http.Request) (string, error) {
-	payloadHash := r.Header.Get("X-Amz-Content-SHA256")
-	slog.Debug("Received payload hash", "X-Amz-Content-SHA256", security.Trunc(payloadHash))
-
-	if payloadHash == UnsignedPayload || payloadHash == StreamingPayload {
-		return payloadHash, nil
-	}
-
-	// Recompute body hash
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		return "", errors.New("could not read body")
-	}
-
-	slog.Debug("Read body", "length", len(body))
-
-	// Restore body
-	r.Body = io.NopCloser(bytes.NewBuffer(body))
-
-	bytePayloadHash, err := hex.DecodeString((payloadHash))
-	if err != nil {
-		return "", errors.New("could not decode payload hash")
-	}
-
-	byteRecomputedPayloadHash := sha256.Sum256(body)
-	recomputedPayloadHash := hex.EncodeToString(byteRecomputedPayloadHash[:])
-
-	slog.Debug(
-		"Comparing payload hashes",
-		"received", security.Trunc(payloadHash),
-		"recomputed", security.Trunc(recomputedPayloadHash),
-	)
-
-	if hmac.Equal(bytePayloadHash, byteRecomputedPayloadHash[:]) {
-		return payloadHash, nil
-	}
-
-	slog.Error("Received and recomputed payload hashes differ")
-	return "", errors.New("payload hashes do not match")
 }
 
 func buildCanonicalURI(path string) string {
@@ -273,10 +234,10 @@ func queryEncode(kv string) string {
 	return esc
 }
 
-func buildCanonicalHeaders(r *http.Request, auth *Sigv4Authorization) map[string]string {
+func buildCanonicalHeaders(r *http.Request, auth *sigV4Authorization) map[string]string {
 	headers := make(map[string]string)
 
-	for _, signedHeader := range auth.SignedHeaders {
+	for _, signedHeader := range auth.signedHeaders {
 		header := strings.ToLower(signedHeader)
 
 		var value string
@@ -293,17 +254,55 @@ func buildCanonicalHeaders(r *http.Request, auth *Sigv4Authorization) map[string
 	return headers
 }
 
+func (req *sigV4Request) validatePayloadHash(r *http.Request) error {
+	if req.payloadHash == UnsignedPayload || req.payloadHash == StreamingPayload {
+		return nil
+	}
+
+	// Recompute body hash
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return errors.New("could not read body")
+	}
+
+	slog.Debug("Read body", "length", len(body))
+
+	// Restore body
+	r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+	bytePayloadHash, err := hex.DecodeString((req.payloadHash))
+	if err != nil {
+		return errors.New("could not decode payload hash")
+	}
+
+	byteRecomputedPayloadHash := sha256.Sum256(body)
+	recomputedPayloadHash := hex.EncodeToString(byteRecomputedPayloadHash[:])
+
+	slog.Debug(
+		"Comparing payload hashes",
+		"received", security.Trunc(req.payloadHash),
+		"recomputed", security.Trunc(recomputedPayloadHash),
+	)
+
+	if hmac.Equal(bytePayloadHash, byteRecomputedPayloadHash[:]) {
+		return nil
+	}
+
+	slog.Error("Received and recomputed payload hashes differ")
+	return errors.New("payload hashes do not match")
+}
+
 // Recompute and validate SigV4 signature
-func (req *SigV4Request) validateSignature() (*SigV4Result, error) {
+func (req *sigV4Request) validateSignature() (*sigV4Result, error) {
 	stringToSign := req.buildStringToSign()
 	slog.Debug("Built string to sign", "stringToSign", security.TruncLastLine(stringToSign))
 
-	signature, err := computeSignature(req.Authorization.Credential, stringToSign)
+	signature, err := computeSignature(req.authorization.credential, stringToSign)
 	if err != nil {
 		return nil, errors.New("could not compute signature")
 	}
 
-	byteSignature, err := hex.DecodeString(req.Authorization.Signature)
+	byteSignature, err := hex.DecodeString(req.authorization.signature)
 	if err != nil {
 		return nil, errors.New("could not decode original signature")
 	}
@@ -315,17 +314,17 @@ func (req *SigV4Request) validateSignature() (*SigV4Result, error) {
 
 	slog.Debug(
 		"Comparing signatures",
-		"received", security.Trunc(req.Authorization.Signature),
+		"received", security.Trunc(req.authorization.signature),
 		"recomputed", security.Trunc(signature),
 	)
 
 	if hmac.Equal(byteSignature, byteRecomputedSignature) {
-		isStreaming := req.PayloadHash == StreamingPayload
+		isStreaming := req.payloadHash == StreamingPayload
 
-		res := &SigV4Result{
-			Credential:  req.Authorization.Credential,
-			Signature:   req.Authorization.Signature,
-			Timestamp:   req.Timestamp,
+		res := &sigV4Result{
+			Credential:  req.authorization.credential,
+			Signature:   req.authorization.signature,
+			Timestamp:   req.timestamp,
 			IsStreaming: isStreaming,
 		}
 
@@ -336,36 +335,36 @@ func (req *SigV4Request) validateSignature() (*SigV4Result, error) {
 	return nil, errors.New("signatures do not match")
 }
 
-func (req *SigV4Request) buildCanonicalRequest() string {
+func (req *sigV4Request) buildCanonicalRequest() string {
 	var canonicalRequest strings.Builder
 
-	canonicalRequest.WriteString(req.Method)
+	canonicalRequest.WriteString(req.method)
 	canonicalRequest.WriteString("\n")
 
-	canonicalRequest.WriteString(req.CanonicalURI)
+	canonicalRequest.WriteString(req.canonicalURI)
 	canonicalRequest.WriteString("\n")
 
-	canonicalRequest.WriteString(req.CanonicalQueryString)
+	canonicalRequest.WriteString(req.canonicalQueryString)
 	canonicalRequest.WriteString("\n")
 
-	for _, header := range req.Authorization.SignedHeaders {
+	for _, header := range req.authorization.signedHeaders {
 		canonicalRequest.WriteString(header)
 		canonicalRequest.WriteString(":")
-		canonicalRequest.WriteString(req.CanonicalHeaders[header])
+		canonicalRequest.WriteString(req.canonicalHeaders[header])
 		canonicalRequest.WriteString("\n")
 	}
 
 	canonicalRequest.WriteString("\n")
 
-	canonicalRequest.WriteString(strings.Join(req.Authorization.SignedHeaders, ";"))
+	canonicalRequest.WriteString(strings.Join(req.authorization.signedHeaders, ";"))
 	canonicalRequest.WriteString("\n")
 
-	canonicalRequest.WriteString(req.PayloadHash)
+	canonicalRequest.WriteString(req.payloadHash)
 
 	return canonicalRequest.String()
 }
 
-func (req *SigV4Request) buildStringToSign() string {
+func (req *sigV4Request) buildStringToSign() string {
 	canonicalRequest := req.buildCanonicalRequest()
 	slog.Debug("Built canonical request", "canonicalRequest", security.TruncLastLine(canonicalRequest))
 
@@ -374,41 +373,14 @@ func (req *SigV4Request) buildStringToSign() string {
 	stringToSign.WriteString("AWS4-HMAC-SHA256")
 	stringToSign.WriteString("\n")
 
-	stringToSign.WriteString(req.Timestamp)
+	stringToSign.WriteString(req.timestamp)
 	stringToSign.WriteString("\n")
 
-	stringToSign.WriteString(req.Authorization.Credential.Scope)
+	stringToSign.WriteString(req.authorization.credential.scope)
 	stringToSign.WriteString("\n")
 
 	hash := sha256.Sum256([]byte(canonicalRequest))
 	stringToSign.WriteString(hex.EncodeToString(hash[:]))
 
 	return stringToSign.String()
-}
-
-func computeSignature(cred *SigV4Credential, stringToSign string) (string, error) {
-	scopeParts := strings.Split(cred.Scope, "/")
-
-	if len(scopeParts) != 4 {
-		return "", errors.New("scope must contain 4 parts")
-	}
-
-	date := scopeParts[0]
-	region := scopeParts[1]
-	service := scopeParts[2]
-
-	dateKey := hmacSHA256([]byte("AWS4"+cred.SecretKey), []byte(date))
-	dateRegionKey := hmacSHA256(dateKey, []byte(region))
-	dateRegionServiceKey := hmacSHA256(dateRegionKey, []byte(service))
-	signingKey := hmacSHA256(dateRegionServiceKey, []byte("aws4_request"))
-	signature := hmacSHA256(signingKey, []byte(stringToSign))
-	signatureString := hex.EncodeToString(signature)
-
-	return signatureString, nil
-}
-
-func hmacSHA256(key, value []byte) []byte {
-	mac := hmac.New(sha256.New, key)
-	mac.Write(value)
-	return mac.Sum(nil)
 }
