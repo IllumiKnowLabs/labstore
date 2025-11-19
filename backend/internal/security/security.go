@@ -42,10 +42,17 @@ func TruncParamHeader(header, key string) string {
 }
 
 func TruncLastLine(sensitive string) string {
+	return TruncLastLines(sensitive, 1)
+}
+
+func TruncLastLines(sensitive string, n int) string {
 	lines := strings.Split(sensitive, "\n")
 
-	idx := len(lines) - 1
-	lines[idx] = Trunc(lines[idx])
+	lastIdx := len(lines) - n
+
+	for idx := len(lines) - 1; idx >= lastIdx; idx-- {
+		lines[idx] = Trunc(lines[idx])
+	}
 
 	truncated := strings.Join(lines, "\n")
 

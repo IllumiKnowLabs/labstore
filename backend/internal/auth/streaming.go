@@ -141,6 +141,8 @@ func (r *sigV4ChunkedReader) readTrailingCRLF() error {
 
 func (r *sigV4ChunkedReader) verifyChunkSigV4() error {
 	stringToSign := r.buildChunkStringToSign()
+	slog.Debug("Built string to sign", "stringToSign", security.TruncLastLines(stringToSign, 3))
+
 	recomputedSignature, err := computeSignature(r.credential, stringToSign)
 
 	if err != nil {
