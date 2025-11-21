@@ -110,7 +110,7 @@ func (r *sigV4ChunkedReader) readChunkHeader() error {
 		signature: sig,
 	}
 
-	slog.Debug("Read chunk header", "size", r.header.size, "signature", security.Trunc(r.header.signature))
+	slog.Debug("chunk header", "size", r.header.size, "signature", security.Trunc(r.header.signature))
 
 	return nil
 }
@@ -122,7 +122,7 @@ func (r *sigV4ChunkedReader) readChunkData() error {
 		return err
 	}
 
-	slog.Debug("Read chunk data", "length", len(r.data))
+	slog.Debug("chunk data", "length", len(r.data))
 
 	return nil
 }
@@ -134,14 +134,14 @@ func (r *sigV4ChunkedReader) readTrailingCRLF() error {
 		return errors.New("invalid chunk termination")
 	}
 
-	slog.Debug("Read chunk CRLF")
+	slog.Debug("chunk crlf")
 
 	return nil
 }
 
 func (r *sigV4ChunkedReader) verifyChunkSigV4() error {
 	stringToSign := r.buildChunkStringToSign()
-	slog.Debug("Built string to sign", "stringToSign", security.TruncLastLines(stringToSign, 3))
+	slog.Debug("string to sign", "string_to_sign", security.TruncLastLines(stringToSign, 3))
 
 	recomputedSignature, err := computeSignature(r.credential, stringToSign)
 
@@ -160,7 +160,7 @@ func (r *sigV4ChunkedReader) verifyChunkSigV4() error {
 	}
 
 	slog.Debug(
-		"Comparing chunk signatures",
+		"comparing chunk signatures",
 		"original", security.Trunc(r.header.signature),
 		"recomputed", security.Trunc(recomputedSignature),
 	)

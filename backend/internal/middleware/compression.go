@@ -15,7 +15,7 @@ func CompressionMiddleware(next http.Handler) http.Handler {
 
 		switch r.Header.Get("Content-Encoding") {
 		case "gzip":
-			slog.Debug("Decompressing gzip request")
+			slog.Debug("decompressing gzip request")
 
 			gz, err := gzip.NewReader(r.Body)
 			if err != nil {
@@ -27,7 +27,7 @@ func CompressionMiddleware(next http.Handler) http.Handler {
 			reader = gz
 
 		case "zstd":
-			slog.Debug("Decompressing zstd request")
+			slog.Debug("decompressing zstd request")
 
 			zr, err := zstd.NewReader(r.Body)
 			if err != nil {

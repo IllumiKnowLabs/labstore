@@ -98,13 +98,13 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 		maxKeys = DefaultMaxKeys
 	} else {
 		if maxKeys, err = strconv.Atoi(mk); err != nil {
-			slog.Warn("Invalid max-keys value, using default...")
+			slog.Warn("invalid max-keys value, using default", "input", mk, "default", DefaultMaxKeys)
 			maxKeys = DefaultMaxKeys
 		}
 	}
 
 	if maxKeys > MaxKeysLimit {
-		slog.Warn("MaxKeys limited", "requested", maxKeys, "limited", MaxKeysLimit)
+		slog.Warn("max-keys capped", "input", maxKeys, "cap", MaxKeysLimit)
 		maxKeys = MaxKeysLimit
 	}
 
@@ -160,7 +160,7 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ListObjects(r *ListObjectsRequest) (*ListBucketResult, error) {
-	slog.Debug("Processing ListObjects", "request", r)
+	slog.Debug("list objects", "request", r)
 
 	if !core.BucketExists(r.Bucket) {
 		return nil, core.ErrorNoSuchBucket()
@@ -191,7 +191,7 @@ func ListObjects(r *ListObjectsRequest) (*ListBucketResult, error) {
 }
 
 func ListObjectsV2(r *ListObjectsRequestV2) (*ListBucketResultV2, error) {
-	slog.Debug("Processing ListObjectsV2", "request", r)
+	slog.Debug("list objects v2", "request", r)
 
 	if !core.BucketExists(r.Bucket) {
 		return nil, core.ErrorNoSuchBucket()

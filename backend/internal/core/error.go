@@ -82,10 +82,10 @@ func HandleError(w http.ResponseWriter, err error) {
 	var s3Error *S3Error
 
 	if errors.As(err, &s3Error) {
-		slog.Error("HTTP: S3 error", "error", s3Error)
+		slog.Error("s3 error", "error", s3Error)
 		WriteXML(w, s3Error.StatusCode, s3Error)
 	} else {
-		slog.Error("HTTP: Internal Server Error", "error", err)
+		slog.Error("internal server error", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

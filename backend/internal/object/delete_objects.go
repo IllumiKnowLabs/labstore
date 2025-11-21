@@ -78,7 +78,7 @@ func DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Debug("Processing DeleteObjects", "request", req)
+	slog.Debug("delete objects", "request", req)
 
 	resp := DeleteObjects(bucket, &req)
 	core.WriteXML(w, http.StatusOK, resp)

@@ -67,7 +67,7 @@ func VerifySigV4(r *http.Request) (*sigV4Result, error) {
 
 func newSigV4Request(r *http.Request) (*sigV4Request, error) {
 	authorization := r.Header.Get("Authorization")
-	slog.Debug("Parsing SigV4 request", "Authorization", security.TruncParamHeader(authorization, "Signature"))
+	slog.Debug("parsing sigv4 request", "authorization", security.TruncParamHeader(authorization, "Signature"))
 
 	auth, err := newSigV4Authorization(authorization)
 	if err != nil {
@@ -75,19 +75,19 @@ func newSigV4Request(r *http.Request) (*sigV4Request, error) {
 	}
 
 	payloadHash := r.Header.Get("X-Amz-Content-SHA256")
-	slog.Debug("Received payload hash", "X-Amz-Content-SHA256", security.Trunc(payloadHash))
+	slog.Debug("payload hash", "x-amz-content-sha256", security.Trunc(payloadHash))
 
 	timestamp := r.Header.Get("X-Amz-Date")
-	slog.Debug("Received timestamp", "X-Amz-Date", timestamp)
+	slog.Debug("timestamp", "x-amz-date", timestamp)
 
 	canonicalURI := buildCanonicalURI(r.URL.Path)
-	slog.Debug("Built canonical URI", "uri", canonicalURI)
+	slog.Debug("canonical uri", "uri", canonicalURI)
 
 	canonicalQueryString := buildCanonicalQueryString(r.URL.RawQuery)
-	slog.Debug("Built canonical query string", "queryString", canonicalQueryString)
+	slog.Debug("canonical query string", "query_string", canonicalQueryString)
 
 	canonicalHeaders := buildCanonicalHeaders(r, auth)
-	slog.Debug("Built canonical headers", "headers", canonicalHeaders)
+	slog.Debug("canonical headers", "headers", canonicalHeaders)
 
 	res := &sigV4Request{
 		method:               r.Method,
@@ -144,10 +144,10 @@ func newSigV4Authorization(authorization string) (*sigV4Authorization, error) {
 	}
 
 	slog.Debug(
-		"Extracted authorization header parts",
-		"Credential", credential,
-		"SignedHeaders", strings.Join(signedHeaders, ";"),
-		"Signature", security.Trunc(signature),
+		"authorization",
+		"credential", credential,
+		"signed_headers", strings.Join(signedHeaders, ";"),
+		"signature", security.Trunc(signature),
 	)
 
 	cred, err := newSigV4Credential(credential)
@@ -169,7 +169,6 @@ func newSigV4Credential(credential string) (*sigV4Credential, error) {
 	credentialParts := strings.Split(credential, "/")
 
 	accessKey := credentialParts[0]
-	slog.Debug("Extracted access key from credential", "accessKey", accessKey)
 
 	secretKey, ok := iam.Users[accessKey]
 	if !ok {
@@ -177,7 +176,8 @@ func newSigV4Credential(credential string) (*sigV4Credential, error) {
 	}
 
 	scope := strings.Join(credentialParts[1:], "/")
-	slog.Debug("Extracted scope from credential", "scope", scope)
+
+	slog.Debug("credential", "access_key", accessKey, "scope", scope)
 
 	res := &sigV4Credential{
 		AccessKey: accessKey,
@@ -263,7 +263,7 @@ func (req *sigV4Request) validatePayloadHash(r *http.Request) error {
 		return errors.New("could not read body")
 	}
 
-	slog.Debug("Read body", "length", len(body))
+	slog.Debug("body", "length", len(body))
 
 	// Restore body
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
@@ -277,7 +277,7 @@ func (req *sigV4Request) validatePayloadHash(r *http.Request) error {
 	recomputedPayloadHash := hex.EncodeToString(byteRecomputedPayloadHash[:])
 
 	slog.Debug(
-		"Comparing payload hashes",
+		"comparing payload hashes",
 		"received", security.Trunc(req.payloadHash),
 		"recomputed", security.Trunc(recomputedPayloadHash),
 	)
@@ -286,14 +286,14 @@ func (req *sigV4Request) validatePayloadHash(r *http.Request) error {
 		return nil
 	}
 
-	slog.Error("Received and recomputed payload hashes differ")
+	slog.Error("payload hashes differ")
 	return errors.New("payload hashes do not match")
 }
 
 // Recompute and validate SigV4 signature
 func (req *sigV4Request) validateSignature() (*sigV4Result, error) {
 	stringToSign := req.buildStringToSign()
-	slog.Debug("Built string to sign", "stringToSign", security.TruncLastLine(stringToSign))
+	slog.Debug("string to sign", "string_to_sign", security.TruncLastLine(stringToSign))
 
 	signature, err := computeSignature(req.authorization.credential, stringToSign)
 	if err != nil {
@@ -311,7 +311,7 @@ func (req *sigV4Request) validateSignature() (*sigV4Result, error) {
 	}
 
 	slog.Debug(
-		"Comparing signatures",
+		"comparing signatures",
 		"received", security.Trunc(req.authorization.signature),
 		"recomputed", security.Trunc(signature),
 	)
@@ -329,7 +329,7 @@ func (req *sigV4Request) validateSignature() (*sigV4Result, error) {
 		return res, nil
 	}
 
-	slog.Error("Received and recomputed signatures differ")
+	slog.Error("signatures differ")
 	return nil, errors.New("signatures do not match")
 }
 
@@ -364,7 +364,7 @@ func (req *sigV4Request) buildCanonicalRequest() string {
 
 func (req *sigV4Request) buildStringToSign() string {
 	canonicalRequest := req.buildCanonicalRequest()
-	slog.Debug("Built canonical request", "canonicalRequest", security.TruncLastLine(canonicalRequest))
+	slog.Debug("canonical request", "canonical_request", security.TruncLastLine(canonicalRequest))
 
 	var stringToSign strings.Builder
 
