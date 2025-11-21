@@ -1,7 +1,10 @@
 BIN_DIR := bin
+
 BACKEND_DIR := backend
-FRONTEND_DIR := web
 BACKEND_CMD := $(BIN_DIR)/labstore-server
+
+FRONTEND_DIR := web
+FRONTEND_SRC_DIRS := $(FRONTEND_DIR)/src $(FRONTEND_DIR)/static
 FRONTEND_BUILD_DIR := $(FRONTEND_DIR)/build
 
 .PHONY: all backend frontend build run clean
@@ -18,16 +21,22 @@ $(BACKEND_CMD): $(BACKEND_SRCS) | $(BIN_DIR)
 
 backend: $(BACKEND_CMD)
 
-frontend:
-	cd $(FRONTEND_DIR) && npm install
+FRONTEND_SRCS := $(shell find $(FRONTEND_SRC_DIRS) -type f)
+
+$(FRONTEND_BUILD_DIR): $(FRONTEND_SRCS)
+	cd $(FRONTEND_DIR) && npm ci
 	cd $(FRONTEND_DIR) && npm run build
+
+frontend: $(FRONTEND_BUILD_DIR)
 
 build: backend frontend
 
 run: build
-	set -a; . ./.env; set +a; \
-	(cd $(BACKEND_DIR) && ../$(BACKEND_CMD) serve --debug &) && \
-	(cd $(FRONTEND_DIR) && npm run preview -- --port 5123)
+	npx dotenv-cli -- npx concurrently \
+		-n backend,web \
+		-c blue,green \
+		"bin/labstore-server serve --debug" \
+		"cd web/ && npm run preview -- --port 5123"
 
 clean:
 	rm -rf $(BIN_DIR)
