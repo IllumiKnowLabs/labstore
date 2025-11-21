@@ -57,7 +57,7 @@ func DeleteObjects(bucket string, r *DeleteObjectsRequest) *DeleteResult {
 		res.Deleted = append(res.Deleted, deleted)
 	}
 
-	return nil
+	return res
 }
 
 // DeleteObjectsHandler: POST /:bucket?delete=
@@ -72,7 +72,11 @@ func DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	bucket := r.PathValue("bucket")
 
 	var req DeleteObjectsRequest
-	core.ReadXML(w, r, &req)
+	err := core.ReadXML(w, r, &req)
+	if err != nil {
+		core.HandleError(w, err)
+		return
+	}
 
 	slog.Debug("Processing DeleteObjects", "request", req)
 
