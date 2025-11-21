@@ -23,7 +23,8 @@ func Start() {
 
 	addr := fmt.Sprintf("%s:%d", config.Env.Host, config.Env.Port)
 
-	middleware := Middleware.Stack(
+	middleware := middleware.Stack(
+		middleware.LoggingMiddleware,
 		middleware.CompressionMiddleware,
 		middleware.AuthMiddleware,
 		middleware.IAMMiddleware,

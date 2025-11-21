@@ -1,4 +1,4 @@
-package router
+package middleware
 
 import (
 	"log/slog"
@@ -7,7 +7,7 @@ import (
 
 type Middleware func(http.Handler) http.Handler
 
-func (Middleware) Stack(mw ...Middleware) Middleware {
+func Stack(mw ...Middleware) Middleware {
 	slog.Debug("Stacking middleware")
 
 	return func(next http.Handler) http.Handler {
