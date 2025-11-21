@@ -32,7 +32,7 @@ func Start() {
 	)
 
 	slog.Info(
-		"Starting S3-compatible object store server",
+		"starting S3-compatible object store server",
 		"host", config.Env.Host,
 		"port", config.Env.Port,
 	)
@@ -48,12 +48,12 @@ func Start() {
 }
 
 func ensureDirectories() {
-	slog.Debug("Ensuring directories")
+	slog.Debug("ensuring directories")
 	os.MkdirAll(config.Env.StorageRoot, 0755)
 }
 
 func loadRoutes(router *http.ServeMux) {
-	slog.Debug("Loading routes")
+	slog.Debug("loading routes")
 
 	// Service
 	router.Handle("GET /", middleware.WithIAM(iam.ListAllMyBuckets, http.HandlerFunc(service.ListBucketsHandler)))

@@ -33,9 +33,9 @@ func Load() {
 
 func loadEnv() {
 	if err := godotenv.Load(dotenvPath); err != nil {
-		slog.Debug("No .env file found, skipping...")
+		slog.Debug("no .env file found, skipping")
 	} else {
-		slog.Debug("Loaded .env file", "path", dotenvPath)
+		slog.Debug("loaded .env file", "path", dotenvPath)
 	}
 
 	Env = helper.Must(env.ParseAs[ServerConfig]())
@@ -58,7 +58,7 @@ func loadEnv() {
 			}
 		}
 
-		slog.Debug("Env var set", "name", env_var_name, "value", env_var_value)
+		slog.Debug("env var set", "name", env_var_name, "value", env_var_value)
 	}
 
 	cwd := helper.Must(os.Getwd())
@@ -66,7 +66,7 @@ func loadEnv() {
 	relStoragePath := helper.Must(filepath.Rel(cwd, absStoragePath))
 
 	slog.Debug(
-		"Storage path resolved",
+		"storage path resolved",
 		"from", Env.StorageRoot,
 		"to", relStoragePath,
 		"relative_to", helper.TildePath(cwd),
