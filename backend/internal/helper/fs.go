@@ -1,6 +1,9 @@
 package helper
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 func FileExists(path string) bool {
 	_, err := os.Stat(path)
@@ -14,4 +17,14 @@ func IsDir(path string) bool {
 	}
 
 	return info.IsDir()
+}
+
+func TildePath(path string) string {
+	home := os.Getenv("HOME")
+
+	if strings.HasPrefix(path, home) {
+		return "~" + path[len(home):]
+	}
+
+	return path
 }

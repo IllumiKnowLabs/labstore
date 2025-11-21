@@ -1,0 +1,30 @@
+# =================
+# Go builder
+# =================
+
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine3.22 AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
+
+WORKDIR /labstore/backend
+
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+
+COPY backend .
+
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o bin/labstore-server ./cmd/labstore-server
+
+FROM alpine:3.22
+
+# =================
+# LabStore backend
+# =================
+
+COPY --from=builder /labstore/backend/bin/labstore-server /usr/local/bin/labstore-server
+
+RUN addgroup -S labstore && adduser -S labstore -G labstore
+USER labstore
+
+ENTRYPOINT ["labstore-server"]

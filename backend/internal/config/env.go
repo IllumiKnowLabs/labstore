@@ -40,10 +40,6 @@ func loadEnv() {
 
 	Env = helper.Must(env.ParseAs[ServerConfig]())
 
-	cwd := helper.Must(os.Getwd())
-	absStoragePath := helper.Must(filepath.Abs(Env.StorageRoot))
-	Env.StorageRoot = helper.Must(filepath.Rel(cwd, absStoragePath))
-
 	t := reflect.TypeOf(Env)
 	v := reflect.ValueOf(Env)
 
@@ -64,4 +60,17 @@ func loadEnv() {
 
 		slog.Debug("Env var set", "name", env_var_name, "value", env_var_value)
 	}
+
+	cwd := helper.Must(os.Getwd())
+	absStoragePath := helper.Must(filepath.Abs(Env.StorageRoot))
+	relStoragePath := helper.Must(filepath.Rel(cwd, absStoragePath))
+
+	slog.Debug(
+		"Storage path resolved",
+		"from", Env.StorageRoot,
+		"to", relStoragePath,
+		"relative_to", helper.TildePath(cwd),
+	)
+
+	Env.StorageRoot = relStoragePath
 }

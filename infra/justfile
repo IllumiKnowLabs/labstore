@@ -8,7 +8,7 @@ default:
     just -l
 
 create:
-    docker compose --env-file ../.env up -d
+    cd .. && docker compose -p labstore -f infra/compose.yml up --build -d
 
 destroy:
-    docker compose --env-file ../.env down
+    cd .. && docker compose -p labstore -f infra/compose.yml down
