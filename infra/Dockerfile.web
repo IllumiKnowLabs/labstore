@@ -1,0 +1,33 @@
+# =================
+# Node builder
+# =================
+
+FROM node:25.2-alpine3.21 as builder
+
+WORKDIR /labstore-web
+
+COPY web/package*.json ./
+RUN npm install
+
+COPY web .
+RUN npm run build
+
+# =================
+# Node production
+# =================
+
+FROM node:25.2-alpine3.21
+
+WORKDIR /labstore-web
+
+COPY --from=builder /labstore-web/build ./build
+COPY web/package*.json ./
+
+RUN npm install --production
+
+EXPOSE 6790
+
+ENV NODE_ENV=production
+ENV PORT=5790
+
+ENTRYPOINT ["node", "build/index.js"]
