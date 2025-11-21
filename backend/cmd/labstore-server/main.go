@@ -1,6 +1,6 @@
 package main
 
-import "github.com/DataLabTechTV/labstore/backend/internal/helper"
+import "github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 
 func main() {
 	rootCmd := NewRootCmd()

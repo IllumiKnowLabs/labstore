@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/DataLabTechTV/labstore/backend/internal/bucket"
-	"github.com/DataLabTechTV/labstore/backend/internal/config"
-	"github.com/DataLabTechTV/labstore/backend/internal/middleware"
-	"github.com/DataLabTechTV/labstore/backend/internal/object"
-	"github.com/DataLabTechTV/labstore/backend/internal/service"
-	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/bucket"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/object"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/service"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
 )
 
 func Start() {

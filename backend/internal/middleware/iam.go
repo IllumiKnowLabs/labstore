@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/DataLabTechTV/labstore/backend/internal/core"
-	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
 )
 
 const iamActionCtx ContextKey = "iamAction"

@@ -3,8 +3,8 @@ package core
 import (
 	"path/filepath"
 
-	"github.com/DataLabTechTV/labstore/backend/internal/config"
-	"github.com/DataLabTechTV/labstore/backend/internal/helper"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 )
 
 func BucketExists(bucket string) bool {
