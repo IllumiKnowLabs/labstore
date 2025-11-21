@@ -29,6 +29,14 @@ type DeletedObject struct {
 	VersionId             string
 }
 
+func (req DeleteObjectsRequest) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("XMLName", req.XMLName),
+		slog.Int("Objects", len(req.Object)),
+		slog.Bool("Quiet", req.Quiet),
+	)
+}
+
 func DeleteObjects(bucket string, r *DeleteObjectsRequest) *DeleteResult {
 	res := &DeleteResult{}
 	bucketPath := filepath.Join(config.Env.StorageRoot, bucket)
