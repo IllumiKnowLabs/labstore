@@ -11,7 +11,6 @@ func ReadXML(w http.ResponseWriter, r *http.Request, dst any) error {
 	defer r.Body.Close()
 
 	if err := decoder.Decode(&dst); err != nil {
-		http.Error(w, fmt.Sprintf("Failed to decode XML: %s", err), http.StatusBadRequest)
 		return fmt.Errorf("failed to decode XML: %w", err)
 	}
 
