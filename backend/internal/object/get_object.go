@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/DataLabTechTV/labstore/backend/internal/config"
-	"github.com/DataLabTechTV/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 )
 
 type GetObjectResult struct {

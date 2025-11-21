@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/DataLabTechTV/labstore/backend/internal/security"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
 )
 
 type sigV4ChunkedReader struct {

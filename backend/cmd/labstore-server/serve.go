@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/DataLabTechTV/labstore/backend/internal/router"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/router"
 	"github.com/spf13/cobra"
 )
 

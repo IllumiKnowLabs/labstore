@@ -14,8 +14,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/DataLabTechTV/labstore/backend/internal/security"
-	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
 )
 
 type sigV4Request struct {

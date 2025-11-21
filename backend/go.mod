@@ -1,4 +1,4 @@
-module github.com/DataLabTechTV/labstore/backend
+module github.com/IllumiKnowLabs/labstore/backend
 
 go 1.25.4
 

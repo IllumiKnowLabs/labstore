@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/DataLabTechTV/labstore/backend/internal/config"
-	"github.com/DataLabTechTV/labstore/backend/internal/helper"
-	"github.com/DataLabTechTV/labstore/backend/pkg/constants"
-	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
-	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/constants"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/logger"
 	"github.com/spf13/cobra"
 )
 

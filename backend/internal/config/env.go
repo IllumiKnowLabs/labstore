@@ -8,9 +8,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/DataLabTechTV/labstore/backend/internal/helper"
-	"github.com/DataLabTechTV/labstore/backend/internal/security"
-	"github.com/DataLabTechTV/labstore/backend/pkg/constants"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/constants"
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 )

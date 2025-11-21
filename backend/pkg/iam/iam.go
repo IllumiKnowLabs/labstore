@@ -1,6 +1,6 @@
 package iam
 
-import "github.com/DataLabTechTV/labstore/backend/internal/config"
+import "github.com/IllumiKnowLabs/labstore/backend/internal/config"
 
 var Users map[string]string
 var Policies map[string]PolicyFunc

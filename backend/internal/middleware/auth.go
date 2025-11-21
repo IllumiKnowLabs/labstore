@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/DataLabTechTV/labstore/backend/internal/auth"
-	"github.com/DataLabTechTV/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/auth"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 )
 
 const accessKeyCtx ContextKey = "accessKey"
