@@ -35,7 +35,7 @@ run: build
 	npx dotenv-cli -- npx concurrently \
 		-n backend,web \
 		-c blue,green \
-		"bin/labstore-server serve --debug" \
+		"bin/labstore-server serve" \
 		"cd web/ && npm run preview -- --port 5123"
 
 clean:
